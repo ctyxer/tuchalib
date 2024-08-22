@@ -2,8 +2,13 @@
 name = "tuchalib"
 version = "0.2.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Vladimir Senchuk"]
+description = """
+A high level client to interact with Telegram`s API and making it a cloud storage.
+"""
+repository = "https://github.com/ctyxer/tuchalib"
+keywords = ["telegram", "cloud"]
+license = "MIT"
 
 [dependencies]
 futures = "0.3.30"
