@@ -1,7 +1,7 @@
 use grammers_tl_types as tl;
 use grammers_tl_types::functions;
 
-use crate::cloud::file::{File, FileMetadata};
+use crate::cloud::file::FileMetadata;
 use crate::error::*;
 use crate::path::Path;
 
