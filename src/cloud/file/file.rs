@@ -1,4 +1,6 @@
-use super::{FileMetadata, Path};
+use crate::path::Path;
+
+use super::FileMetadata;
 
 #[derive(Debug, Clone)]
 pub struct File {

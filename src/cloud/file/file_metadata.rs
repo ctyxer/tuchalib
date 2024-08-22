@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::Path;
+use crate::path::Path;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileMetadata {

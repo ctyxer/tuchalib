@@ -1,18 +1,19 @@
 use grammers_tl_types as tl;
 use grammers_tl_types::functions;
 
+use crate::cloud::file::{File, FileMetadata};
 use crate::error::*;
-use crate::path::FileIter;
-use crate::path::FileMetadata;
 use crate::path::Path;
 
+use super::file::FileIter;
+
 #[derive(Clone, Debug)]
-pub struct Cloud<'a> {
-    client: &'a grammers_client::Client,
+pub struct Cloud {
+    pub client: grammers_client::Client,
 }
 
-impl<'a> Cloud<'a> {
-    pub fn new(client: &'a grammers_client::Client) -> Self {
+impl Cloud {
+    pub fn new(client: grammers_client::Client) -> Self {
         Self { client }
     }
 
@@ -68,8 +69,8 @@ impl<'a> Cloud<'a> {
             .map_err(|_| DeleteStorageChatError::CannotDeleteChat)
     }
 
-    pub async fn uploaded_file(&self, chat: &grammers_client::types::Chat) -> FileIter {
-        FileIter::new(self.client.iter_messages(chat))
+    pub fn file_iter(&self, storage_chat: &grammers_client::types::Chat) -> FileIter {
+        FileIter::new(self.client.clone(), storage_chat.clone())
     }
 
     pub async fn upload_file<P: AsRef<std::path::Path>>(
@@ -78,7 +79,6 @@ impl<'a> Cloud<'a> {
         file: P,
         saving_path: Path,
     ) -> Result<(), UploadFileError> {
-        dbg!(Into::<Path>::into(file.as_ref()).components());
         let metadata = FileMetadata::new(
             saving_path.join(
                 Into::<Path>::into(file.as_ref())
