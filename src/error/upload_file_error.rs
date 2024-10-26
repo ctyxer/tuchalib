@@ -3,7 +3,8 @@ pub enum UploadFileError {
     FileHasNotGotName,
     CannotSendMetadata,
     CannotUploadFile,
-    MediaMessageIsNotSended
+    MediaMessageIsNotSended,
+    MetadataMessageIsNotSended,
 }
 
 impl std::error::Error for UploadFileError {}
@@ -15,6 +16,7 @@ impl std::fmt::Display for UploadFileError {
             UploadFileError::FileHasNotGotName => write!(f, "File has not got name."),
             UploadFileError::CannotSendMetadata => write!(f, "Cannot send metadata."),
             UploadFileError::MediaMessageIsNotSended => write!(f, "Media message is not sended."),
+            UploadFileError::MetadataMessageIsNotSended => write!(f, "Metadata message is not sended."),
         }
     }
 }

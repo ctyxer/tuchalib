@@ -10,7 +10,7 @@ use grammers_client::{
     types::{Chat, Message},
     Client,
 };
-use grammers_mtsender::InvocationError;
+use grammers_client::InvocationError;
 
 use super::{File, FileMetadata};
 
