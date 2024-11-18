@@ -1,5 +1,3 @@
-use grammers_client::grammers_tl_types as tl;
-
 use crate::error::*;
 use crate::path::Path;
 use crate::types::file::File;
@@ -13,58 +11,6 @@ pub struct Cloud {
 }
 
 impl Cloud {
-    pub async fn get_storage_chat(
-        &self,
-        storage_chat_name: &str,
-    ) -> Option<grammers_client::types::Chat> {
-        let mut dialogs_iter = self.client.iter_dialogs();
-
-        while let Ok(Some(dialog)) = dialogs_iter.next().await {
-            match dialog.chat() {
-                grammers_client::types::Chat::Group(group) => {
-                    if group.title() == storage_chat_name {
-                        return Some(dialog.chat.into());
-                    }
-                }
-                _ => continue,
-            }
-        }
-        None
-    }
-
-    pub async fn create_storage_chat(
-        &self,
-        storage_chat_name: &str,
-    ) -> Result<grammers_client::types::Chat, CreateStorageChatError> {
-        match self
-            .client
-            .invoke(&tl::functions::messages::CreateChat {
-                users: vec![tl::enums::InputUser::UserSelf],
-                title: storage_chat_name.to_string(),
-                ttl_period: None,
-            })
-            .await
-        {
-            Ok(_) => self
-                .get_storage_chat(storage_chat_name)
-                .await
-                .ok_or(CreateStorageChatError::CreatedStorageChatIsNotFound),
-            Err(_) => Err(CreateStorageChatError::ChatIsNotCreated),
-        }
-    }
-
-    pub async fn delete_storage_chat(
-        &self,
-        storage_chat: &grammers_client::types::Chat,
-    ) -> Result<bool, DeleteStorageChatError> {
-        self.client
-            .invoke(&tl::functions::messages::DeleteChat {
-                chat_id: storage_chat.id(),
-            })
-            .await
-            .map_err(|_| DeleteStorageChatError::CannotDeleteChat)
-    }
-
     pub fn file_iter(&self, storage_chat: &grammers_client::types::Chat) -> FileIter {
         FileIter::new(self.client.clone(), storage_chat.clone())
     }
