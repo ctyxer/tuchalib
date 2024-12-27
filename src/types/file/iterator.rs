@@ -7,7 +7,7 @@ use std::{
 use futures::Stream;
 use grammers_client::{
     client::messages::MessageIter,
-    types::{Chat, Message},
+    types::Message,
     Client,
 };
 use grammers_client::InvocationError;
@@ -20,8 +20,8 @@ pub struct FileIter {
 }
 
 impl FileIter {
-    pub(crate) fn new(client: Client, chat: Chat) -> Self {
-        let message_iter = client.iter_messages(chat);
+    pub(crate) fn new<C: Into<grammers_client::types::PackedChat>>(client: Client, chat: C) -> Self {
+        let message_iter = client.iter_messages(chat.into());
         let next_message = Box::pin(Self::next_message(message_iter));
 
         Self { next_message }

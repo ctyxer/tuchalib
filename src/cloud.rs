@@ -5,30 +5,48 @@ use crate::types::file::FileMetadata;
 
 use crate::types::file::FileIter;
 
-#[derive(Clone, Debug)]
-pub struct Cloud {
-    pub client: grammers_client::Client,
+#[trait_variant::make]
+pub trait ClientExt {
+    fn iter_files<C: Into<grammers_client::types::PackedChat>>(&self, chat: C) -> FileIter;
+
+    async fn upload_file<P: AsRef<std::path::Path>>(
+        &self,
+        chat: &grammers_client::types::Chat,
+        current_path: P,
+        saving_path: &Path,
+    ) -> Result<File, UploadFileError>;
+
+    async fn download_file<P: AsRef<std::path::Path>>(
+        &self,
+        chat: &grammers_client::types::Chat,
+        file: File,
+        save_path: P,
+    ) -> Result<(), DownloadFileError>;
+
+    async fn delete_file(
+        &self,
+        chat: &grammers_client::types::Chat,
+        file: File,
+    ) -> Result<(), DeleteFileError>;
 }
 
-impl Cloud {
-    pub fn file_iter(&self, storage_chat: &grammers_client::types::Chat) -> FileIter {
-        FileIter::new(self.client.clone(), storage_chat.clone())
+impl ClientExt for grammers_client::Client {
+    fn iter_files<C: Into<grammers_client::types::PackedChat>>(&self, chat: C) -> FileIter {
+        FileIter::new(self.clone(), chat.into())
     }
 
-    pub async fn upload_file<P: AsRef<std::path::Path>>(
+    async fn upload_file<P: AsRef<std::path::Path>>(
         &self,
         chat: &grammers_client::types::Chat,
         current_path: P,
         saving_path: &Path,
     ) -> Result<File, UploadFileError> {
         let uploaded_file = self
-            .client
             .upload_file(&current_path)
             .await
             .map_err(|_| UploadFileError::CannotUploadFile)?;
 
         let media_message = self
-            .client
             .send_message(
                 chat,
                 grammers_client::InputMessage::text("").file(uploaded_file),
@@ -48,7 +66,6 @@ impl Cloud {
         };
 
         let metadata_message = self
-            .client
             .send_message(
                 chat,
                 grammers_client::InputMessage::text(
@@ -61,14 +78,13 @@ impl Cloud {
         Ok(File::new(metadata, metadata_message.id()))
     }
 
-    pub async fn download_file<P: AsRef<std::path::Path>>(
+    async fn download_file<P: AsRef<std::path::Path>>(
         &self,
         chat: &grammers_client::types::Chat,
         file: File,
         save_path: P,
     ) -> Result<(), DownloadFileError> {
         let message = self
-            .client
             .get_messages_by_id(chat, &[file.message_id])
             .await
             .map_err(|_| DownloadFileError::MetadataMessageIsNotFound)?;
@@ -76,7 +92,6 @@ impl Cloud {
         if let Some(Some(message)) = message.first() {
             if let Ok(file_metadata) = serde_json::from_str::<FileMetadata>(message.text()) {
                 if let Some(Some(media_message)) = self
-                    .client
                     .get_messages_by_id(chat, &[file_metadata.file_message_id])
                     .await
                     .map_err(|_| DownloadFileError::MediaMessageNotFound)?
@@ -104,21 +119,19 @@ impl Cloud {
         Ok(())
     }
 
-    pub async fn delete_file(
+    async fn delete_file(
         &self,
         chat: &grammers_client::types::Chat,
         file: File,
     ) -> Result<(), DeleteFileError> {
         if let Some(Some(message)) = self
-            .client
             .get_messages_by_id(chat, &[file.message_id])
             .await
             .map_err(|_| DeleteFileError::MessageIsNotFound)?
             .first()
         {
             if let Ok(file_metadata) = serde_json::from_str::<FileMetadata>(message.text()) {
-                self.client
-                    .delete_messages(chat, &[file_metadata.file_message_id, file.message_id])
+                self.delete_messages(chat, &[file_metadata.file_message_id, file.message_id])
                     .await
                     .map_err(|_| DeleteFileError::CannotDeleteFile)?;
             }
